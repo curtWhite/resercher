@@ -30,7 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<UserData | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     .then(data => {
                         console.log('User validation response:', data);
                         if (data.user) {
-                            setUser(userData.user);
+                            setUser(userData);
                             setIsAuthenticated(true);
                         } else {
                             setUser(null);
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!response.ok) {
             throw new Error(data.message || 'Failed to log in');
         }
-        setUser(data.user);
+        setUser(data);
         setIsAuthenticated(true);
         // Optionally, persist user data to localStorage/sessionStorage here
         localStorage.setItem('user', JSON.stringify(data));
