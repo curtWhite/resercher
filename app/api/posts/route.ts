@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
       createdAt: now,
       updatedAt: now,
       published: data.published || false,
+      status: data.published? 'published' : 'draft'
     };
 
     // In a real app, we would save to a database

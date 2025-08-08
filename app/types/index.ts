@@ -23,6 +23,7 @@ export interface UserUpdateData {
 
 // Blog post related types
 export interface BlogPost {
+  status: string;
   id: ID;
   title: string;
   content: string;
@@ -65,6 +66,12 @@ export interface BlogPostUpdateData {
 
 // Research paper related types
 export interface ResearchPaper {
+  pages: string;
+  issue: any;
+  volume: any;
+  citations: string[];
+  externalUrl: string;
+  keywords: string[];
   id: ID;
   title: string;
   authors: string[];

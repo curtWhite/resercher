@@ -264,7 +264,7 @@ export default function NewReviewPage() {
           </div>
         )}
         
-        <form onSubmit={(e) => handleSubmit(e, formData.status)}>
+        <form onSubmit={(e) => handleSubmit(e, formData.status as 'draft' | 'published')}>
           {/* Paper Selection */}
           <div className="bg-white shadow rounded-lg p-6 mb-8">
             <h2 className="text-xl font-bold mb-4">1. Select Research Paper</h2>
@@ -350,7 +350,7 @@ export default function NewReviewPage() {
                 )}
                 
                 <p className="mt-4 text-sm text-gray-500">
-                  Can't find the paper you're looking for?{' '}
+                  Can&apos;t find the paper you&apos;re looking for?{' '}
                   <Link href="/papers/new" className="text-blue-600 hover:underline">
                     Add a new paper
                   </Link>

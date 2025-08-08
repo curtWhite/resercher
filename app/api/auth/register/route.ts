@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { users } from '@/app/lib/db';
+import { Users } from '@/app/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '@/app/types';
 
@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists
-    const existingUser = users.find(user => user.email === email);
-    if (existingUser) {
+    const existingUser = await Users.findByEmail(email);
+    if (existingUser.length > 0) {
       return NextResponse.json(
         { error: 'A user with this email already exists' },
         { status: 409 }
@@ -40,17 +40,19 @@ export async function POST(request: NextRequest) {
 
     // In a real app, we would save to a database
     // For now, we just add to our in-memory array
-    users.push(newUser);
+    return await Users.create(newUser).then(() => {
+      console.log('User registered successfully');
+      // Don't return the password
+      const { password: _, ...userWithoutPassword } = newUser;
 
-    // Don't return the password
-    const { password: _, ...userWithoutPassword } = newUser;
-    
-    return NextResponse.json({
-      message: 'Registration successful',
-      user: userWithoutPassword,
-      // Mock token - in a real app, this would be a real JWT
-      token: `mock-jwt-token-${newUser.id}`
-    }, { status: 201 });
+      return NextResponse.json({
+        message: 'Registration successful',
+        user: userWithoutPassword,
+        // Mock token - in a real app, this would be a real JWT
+        token: `mock-jwt-token-${newUser.id}`
+      }, { status: 201 });
+    });
+
   } catch (error) {
     console.error('Error during registration:', error);
     return NextResponse.json(

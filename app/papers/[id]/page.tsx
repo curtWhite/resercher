@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ResearchPaper, BlogPost } from '@/app/types';
-import PdfViewer from '@/app/components/pdf-viewer';
+// import PdfViewer from '@/app/components/pdf-viewer';
 
 export default function PaperDetailPage() {
   const params = useParams();
@@ -122,7 +122,7 @@ export default function PaperDetailPage() {
                   {paper.journal}
                 </span>
                 <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                  Published: {formatDate(paper.publicationDate)}
+                  Published: {paper.publicationDate ? formatDate(paper.publicationDate) : 'Unknown date'}
                 </span>
                 <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
                   DOI: {paper.doi}
@@ -188,11 +188,11 @@ export default function PaperDetailPage() {
           </div>
           
           {/* PDF Viewer */}
-          {showPdf && paper.pdfUrl && (
+          {/* {showPdf && paper.pdfUrl && (
             <div className="mt-8">
               <PdfViewer pdfUrl={paper.pdfUrl} />
             </div>
-          )}
+          )} */}
           
           {/* Citations section */}
           {paper.citations && paper.citations.length > 0 && (

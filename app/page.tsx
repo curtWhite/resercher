@@ -207,7 +207,7 @@ export default function HomePage() {
                         </Link>
                       </h4>
                       <p className="text-sm text-gray-500 mb-2">
-                        {formatDate(paper.publicationDate)}
+                        {paper.publicationDate ? formatDate(paper.publicationDate) : 'Unknown date'}
                       </p>
                       <p className="text-gray-600 text-sm">{paper.authors.join(', ')}</p>
                     </div>

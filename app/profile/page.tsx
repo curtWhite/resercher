@@ -255,7 +255,7 @@ export default function ProfilePage() {
                 <div className="bg-white shadow rounded-lg p-8 text-center">
                   <h3 className="text-xl font-medium text-gray-900 mb-2">No reviews yet</h3>
                   <p className="text-gray-600 mb-6">
-                    You haven't created any reviews yet. Start sharing your insights on research papers!
+                    You haven&apos;t created any reviews yet. Start sharing your insights on research papers!
                   </p>
                   <Link
                     href="/reviews/new"
@@ -274,7 +274,7 @@ export default function ProfilePage() {
               <div className="bg-white shadow rounded-lg p-8 text-center">
                 <h3 className="text-xl font-medium text-gray-900 mb-2">No saved papers</h3>
                 <p className="text-gray-600 mb-6">
-                  You haven't saved any research papers yet. Browse papers and save them for later reading!
+                  You haven&apos;t saved any research papers yet. Browse papers and save them for later reading!
                 </p>
                 <Link
                   href="/papers"

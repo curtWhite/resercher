@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { users } from '@/app/lib/db';
+import { Users } from '@/app/lib/db';
 
 // GET /api/auth/me - Get current authenticated user
 export async function GET(request: NextRequest) {
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     
     const userId = token.replace('mock-jwt-token-', '');
     
-    const user = users.find(u => u.id === userId);
+    const user = await Users.findById(userId);
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },

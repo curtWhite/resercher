@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BlogPost, ResearchPaper, User, Comment, Category, Tag } from '@/app/types';
-import PdfViewer from '@/app/components/pdf-viewer';
 import { useAuth } from '@/app/context/auth';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';

@@ -118,7 +118,13 @@ export async function POST(request: NextRequest) {
       journal: data.journal,
       publicationDate: data.publicationDate,
       userId: data.userId,
-      uploadedAt: now
+      uploadedAt: now,
+      citations: data.citations || [],
+      keywords: data.keywords || [],
+      pages: data.pages || '',
+      issue: data.issue || '',
+      volume: data.volume || '',
+      externalUrl: data.externalUrl || ''
     };
 
     // In a real app, we would save to a database

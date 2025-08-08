@@ -258,7 +258,7 @@ export default function ReviewsPage() {
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
           <h3 className="text-xl font-medium text-gray-900 mb-2">No reviews found</h3>
           <p className="text-gray-600 mb-6">
-            Try adjusting your search or filter criteria to find what you're looking for.
+            Try adjusting your search or filter criteria to find what you&apos;re looking for.
           </p>
           <button
             onClick={() => {
