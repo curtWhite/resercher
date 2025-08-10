@@ -43,6 +43,7 @@ export default function ReviewDetailPage() {
 
   useEffect(() => {
     async function fetchData() {
+
       try {
         setIsLoading(true);
 
@@ -60,7 +61,8 @@ export default function ReviewDetailPage() {
         setPost(postData);
 
         // Fetch related data if post exists
-        if (postData.data) {
+        if (postData.id) {
+
           // Fetch categories and tags in parallel
           const [categoriesRes, tagsRes] = await Promise.all([
             fetch('/api/categories'),
@@ -78,8 +80,8 @@ export default function ReviewDetailPage() {
           }
 
           // Fetch author details
-          if (postData.data.userId) {
-            const authorRes = await fetch(`/api/users/${postData.data.userId}`);
+          if (postData.userId) {
+            const authorRes = await fetch(`/api/users/${postData.userId}`);
             if (authorRes.ok) {
               const authorData = await authorRes.json();
               setAuthor(authorData.data);
@@ -87,23 +89,23 @@ export default function ReviewDetailPage() {
           }
 
           // Fetch associated paper if exists
-          if (postData.data.paperId) {
-            const paperRes = await fetch(`/api/papers/${postData.data.paperId}`);
+          if (postData.paperId) {
+            const paperRes = await fetch(`/api/papers/${postData.paperId}`);
             if (paperRes.ok) {
               const paperData = await paperRes.json();
-              setPaper(paperData.data);
+              setPaper(paperData);
             }
           }
 
           // Fetch comments
-          const commentsRes = await fetch(`/api/posts/${postId}/comments`);
+          const commentsRes = await fetch(`/api/comments/posts/${postId}`);
           if (commentsRes.ok) {
             const commentsData = await commentsRes.json();
-            setComments(commentsData.data || []);
+            setComments(commentsData || []);
           }
 
           // Fetch related posts (posts with same categories or tags)
-          if (postData.data.categoryIds?.length || postData.data.tagIds?.length) {
+          if (postData.categoryIds?.length || postData.tagIds?.length) {
             const relatedRes = await fetch('/api/posts?limit=3');
             if (relatedRes.ok) {
               const relatedData = await relatedRes.json();
@@ -117,6 +119,7 @@ export default function ReviewDetailPage() {
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load post');
+
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -124,6 +127,17 @@ export default function ReviewDetailPage() {
     }
 
     fetchData();
+
+    return () => {
+      // Cleanup if needed
+      setPost(null);
+      setPaper(null);
+      setAuthor(null);
+      setComments([]);
+      setCategories([]);
+      setTags([]);
+      setRelatedPosts([]);
+    }
   }, [postId, router]);
 
   useEffect(() => {
@@ -135,7 +149,8 @@ export default function ReviewDetailPage() {
     }
   }, [post]);
 
-
+  useEffect(() => {
+  }, [comments])
 
 
   // Handle new comment submission
@@ -147,7 +162,7 @@ export default function ReviewDetailPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/posts/${postId}/comments`, {
+      const response = await fetch(`/api/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,8 +170,7 @@ export default function ReviewDetailPage() {
         body: JSON.stringify({
           content: commentText,
           postId: postId,
-          // In a real app, userId would come from auth context
-          userId: 'user1',
+          userId: auth.user?.user?._id || null,
         }),
       });
 
@@ -165,10 +179,9 @@ export default function ReviewDetailPage() {
       const data = await response.json();
 
       // Add new comment to the list
-      setComments(prevComments => [...prevComments, data.data]);
+      setComments(prevComments => [...prevComments, data]);
       setCommentText('');
     } catch (err: any) {
-      console.error('Error submitting comment:', err);
       alert('Failed to submit comment. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -327,18 +340,18 @@ export default function ReviewDetailPage() {
                   <span className="font-medium">Journal:</span> {paper.journal}
                 </p>
                 <p className="text-gray-600 mb-4">
-                  <span className="font-medium">DOI:</span> {paper.doi}
+                  <span className="font-medium">Published:</span> {paper.doi}
                 </p>
-                <p className="text-gray-700">{paper.abstract}</p>
+                {/* <p className="text-gray-700">{paper.abstract}</p> */}
               </div>
 
               <div className="flex space-x-4">
-                <button
+                {/* <button
                   onClick={() => setShowPdf(!showPdf)}
                   className="px-4 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50"
                 >
                   {showPdf ? 'Hide PDF' : 'View PDF'}
-                </button>
+                </button> */}
 
                 {paper.pdfUrl && (
                   <a
@@ -346,7 +359,7 @@ export default function ReviewDetailPage() {
                     download
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
-                    Download PDF
+                    View Article
                   </a>
                 )}
               </div>
@@ -408,21 +421,24 @@ export default function ReviewDetailPage() {
             {/* Comments list */}
             {comments.length > 0 ? (
               <div className="space-y-6">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center">
-                        {/* This would fetch user avatar dynamically in a real app */}
-                        <div className="h-8 w-8 rounded-full bg-gray-300 mr-2"></div>
-                        <span className="font-medium">{comment.userId}</span>
+                {comments.map((comment) => {
+                  if (!comment) return null; // Skip if comment is null
+                  return (
+                    <div key={comment._id} className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center">
+                          {/* This would fetch user avatar dynamically in a real app */}
+                          <div className="h-8 w-8 rounded-full bg-gray-300 mr-2"></div>
+                          <span className="font-medium">{comment.user?.name}</span>
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          {comment.createdAt && formatDate(comment.createdAt)}
+                        </span>
                       </div>
-                      <span className="text-sm text-gray-500">
-                        {comment.createdAt && formatDate(comment.createdAt)}
-                      </span>
+                      <p className="text-gray-700">{comment.content}</p>
                     </div>
-                    <p className="text-gray-700">{comment.content}</p>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <div className="text-center py-8 bg-gray-50 rounded-lg">

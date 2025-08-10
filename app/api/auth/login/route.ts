@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       message: 'Login successful',
       user: userWithoutPassword,
       // Mock token - in a real app, this would be a real JWT
-      token: `jwt-token-${user.id}`
+      token: `jwt-token-${user._id}`
     });
   } catch (error) {
     console.error('Error during login:', error);

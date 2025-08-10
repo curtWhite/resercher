@@ -56,12 +56,10 @@ export async function PUT(
 
     // Update the paper in our in-memory array
     return await ResearchPapers.update(id, updatedPaper).then(() => {
-      console.log('Paper updated successfully');
       return NextResponse.json(updatedPaper);
     });
 
   } catch (error) {
-    console.error('Error updating paper:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -88,7 +86,6 @@ export async function DELETE(
 
     // Remove the paper from our in-memory array
     return await ResearchPapers.delete(id).then(() => {
-      console.log('Paper deleted successfully');
       return NextResponse.json(
         { message: 'Paper successfully deleted' },
         { status: 200 }
@@ -96,7 +93,6 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Error deleting paper:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

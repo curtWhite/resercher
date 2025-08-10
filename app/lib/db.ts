@@ -1,14 +1,17 @@
 // import { MongoClient } from "mongodb";
 
+import { ObjectId } from "mongodb";
 import clientPromise from "../api/mongodb";
 import {
-  User,
+  User as UserBase,
   BlogPost,
   ResearchPaper,
   Category,
   Tag,
   Comment
 } from "../types";
+
+type User = Omit<UserBase, '_id'> & { _id?: ObjectId | string | undefined };
 import bcrypt from "bcryptjs";
 
 // const client = new MongoClient(process.env.MONGODB_URI || "mongodb://localhost:27017");
@@ -59,19 +62,25 @@ export class Users {
   static async findById(id: string) {
     const db = await getDatabase();
     const usersCollection = db.collection<User>('users');
-    return usersCollection.findOne({ id });
+    try {
+      // Use 'as any' to satisfy the type checker if User._id is string
+      return await usersCollection.findOne({ _id: new ObjectId(id) } as any);
+    } catch (error) {
+      console.error('Error finding user by ID:', error);
+      return null;
+    }
   }
 
   static async update(id: string, data: Partial<User>) {
     const db = await getDatabase();
     const usersCollection = db.collection<User>('users');
-    return await usersCollection.updateOne({ id }, { $set: data });
+    return await usersCollection.updateOne({ _id: new ObjectId(id) }, { $set: data });
   }
 
   static async delete(id: string) {
     const db = await getDatabase();
     const usersCollection = db.collection<User>('users');
-    return await usersCollection.deleteOne({ id });
+    return await usersCollection.deleteOne({ _id: new ObjectId(id) });
   }
 
 }
@@ -194,15 +203,50 @@ export class ResearchPapers {
     return await papersCollection.deleteOne({ id });
   }
 
-  static async filterByKeys(keys:any) {
+  static async filterByKeys(keys: any) {
     const db = await getDatabase();
     const papersCollection = db.collection<ResearchPaper>('research-papers');
     return papersCollection.find({ $or: keys }).toArray();
   }
 }
 
+// const _categories = {
+//     "Physical sciences":["Sub Category","Physics","Astronomy and planetary science","Chemistry","Materials science","Mathematics and computing","Engineering","Nanoscience and technology","Optics and photonics","Energy science and technology"],
+//     "Earth and environmental sciences":["","Climate sciences","Ecology","Environmental sciences","Solid Earth sciences","Planetary science","Environmental social sciences","Biogeochemistry","Ocean sciences","Hydrology","Natural hazards","Limnology","Space physics"],
+//     "Biological sciences":["","Genetics","Microbiology","Neuroscience","Ecology","Immunology","Evolution","Cancer","Cell biology","Biochemistry","Molecular biology","Zoology","Developmental biology","Biological techniques","Structural biology","Physiology","Biotechnology","Computational biology and bioinformatics","Drug discovery","Stem cells","Plant sciences","Psychology","Biophysics","Chemical biology","Systems biology"],
+//     "Health sciences":["","Diseases","Health care","Medical research","Anatomy","Pathogenesis","Biomarkers","Risk factors","Neurology","Signs and symptoms","Endocrinology","Health occupations"],
+//     "Scientific community and society":["","Scientific community","Social sciences","Business and industry","Developing world","Agriculture","Water resources","Geography","Energy and society","Forestry"]
+//               }
+
+// const categoriesLoader = async () => {
+//   const db = await getDatabase();
+//   const categoriesCollection = db.collection<Category>('categories');
+//   // categoriesCollection.insertMany(
+//   const cats = []
+//   Object.keys(_categories).map((name, index) => {
+//     const category = {
+//       name: name,
+//       description:name,
+//       slug: name.toLowerCase().replace(/\s+/g, '-'),
+//       parent: null
+//     }
+//     _categories[name].map((subCategory: any) => {
+//       const subCat = {
+//         name: subCategory,
+//         description: subCategory,
+//         slug: subCategory.toLowerCase().replace(/\s+/g, '-'),
+//         parent: category.slug
+//       }
+//       cats.push(subCat);
+//     })
+//     cats.push(category);
+//   })
+//   return await categoriesCollection.insertMany(cats);
+// }
+
 export class BlogPosts {
   static async getAll() {
+    // await categoriesLoader()
     const db = await getDatabase();
     const postsCollection = db.collection<BlogPost>('blogs');
     return postsCollection.find({}).toArray();
@@ -258,12 +302,22 @@ export class Comments {
     return await commentsCollection.updateOne({ id }, { $set: data });
   }
 
+  static async getAllByPostId(postId: string) {
+
+    const db = await getDatabase();
+    const commentsCollection = db.collection<Comment>('comments');
+    const comments = await commentsCollection.find({ postId }).toArray();
+    const all = await Promise.all(comments.map(async comment => ({ ...comment, user: !comment.userId.includes('user') && await Users.findById(comment.userId) })))
+    return all;
+  }
+
   static async delete(id: string) {
     const db = await getDatabase();
     const commentsCollection = db.collection<Comment>('comments');
     return await commentsCollection.deleteOne({ id });
   }
 }
+
 
 
 

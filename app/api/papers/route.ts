@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
     // Apply filters
     let filteredPapers = [...researchPapers];
 
-    console.log('Filtered papers before applying filters:', filteredPapers);
 
     if (userId) {
       filteredPapers = await ResearchPapers.findByUserId(userId);
@@ -130,7 +129,6 @@ export async function POST(request: NextRequest) {
     // In a real app, we would save to a database
     // For now, we just add to our in-memory array
     return await ResearchPapers.create(newPaper).then(() => {
-      console.log('Paper uploaded successfully:', newPaper);
       return NextResponse.json(newPaper, { status: 201 });
     })
 

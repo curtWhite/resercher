@@ -11,37 +11,38 @@ export default function ReviewsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Filters
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
-  
+  const [showAll, setShowALl] = useState<boolean>(false);
+
   useEffect(() => {
     async function fetchData() {
       try {
         setIsLoading(true);
-        
+
         // Fetch posts, categories, and tags in parallel
         const [postsRes, categoriesRes, tagsRes] = await Promise.all([
           fetch('/api/posts'),
           fetch('/api/categories'),
           fetch('/api/tags')
         ]);
-        
+
         if (!postsRes.ok) throw new Error('Failed to fetch posts');
         if (!categoriesRes.ok) throw new Error('Failed to fetch categories');
         if (!tagsRes.ok) throw new Error('Failed to fetch tags');
-        
+
         const postsData = await postsRes.json();
         const categoriesData = await categoriesRes.json();
         const tagsData = await tagsRes.json();
-        
+
         setPosts(postsData.items || []);
         setCategories(categoriesData || []);
         setTags(tagsData || []);
-        
+
       } catch (err: any) {
         setError(err.message || 'Failed to load data');
         console.error(err);
@@ -49,29 +50,29 @@ export default function ReviewsPage() {
         setIsLoading(false);
       }
     }
-    
+
     fetchData();
   }, []);
-  
+
   // Handle category filter change
   const handleCategoryChange = (catId: string) => {
     setSelectedCategory(catId === selectedCategory ? '' : catId);
   };
-  
+
   // Handle tag filter toggle
   const handleTagToggle = (tagId: string) => {
-    setSelectedTags(prev => 
+    setSelectedTags(prev =>
       prev.includes(tagId)
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     );
   };
-  
+
   // Handle sort change
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortBy(e.target.value);
   };
-  
+
   // Filter and sort posts
   const filteredAndSortedPosts = [...posts]
     .filter(post => {
@@ -79,7 +80,7 @@ export default function ReviewsPage() {
       if (selectedCategory && !post.categoryIds?.includes(selectedCategory)) {
         return false;
       }
-      
+
       // Filter by selected tags
       if (selectedTags.length > 0) {
         // Check if post has at least one of the selected tags
@@ -87,7 +88,7 @@ export default function ReviewsPage() {
           return false;
         }
       }
-      
+
       // Filter by search query
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -97,27 +98,27 @@ export default function ReviewsPage() {
           post.content.toLowerCase().includes(query)
         );
       }
-      
+
       return true;
     })
     .sort((a, b) => {
       if (sortBy === 'newest') {
-        return new Date(b.publishedAt || b.createdAt).getTime() - 
-               new Date(a.publishedAt || a.createdAt).getTime();
+        return new Date(b.publishedAt || b.createdAt).getTime() -
+          new Date(a.publishedAt || a.createdAt).getTime();
       } else if (sortBy === 'oldest') {
-        return new Date(a.publishedAt || a.createdAt).getTime() - 
-               new Date(b.publishedAt || b.createdAt).getTime();
+        return new Date(a.publishedAt || a.createdAt).getTime() -
+          new Date(b.publishedAt || b.createdAt).getTime();
       }
       // Add more sort options as needed
       return 0;
     });
-  
+
   // Get category name by ID
   const getCategoryName = (catId: string) => {
     const category = categories.find(cat => cat.id === catId);
     return category ? category.name : catId;
   };
-  
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-16">
@@ -127,14 +128,14 @@ export default function ReviewsPage() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
           <p className="text-red-700">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           >
             Try Again
@@ -143,11 +144,11 @@ export default function ReviewsPage() {
       </div>
     );
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-6">Research Reviews</h1>
-      
+
       {/* Search and filters */}
       <div className="bg-white shadow rounded-lg p-6 mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -175,7 +176,7 @@ export default function ReviewsPage() {
               />
             </svg>
           </div>
-          
+
           {/* Sort dropdown */}
           <div className="flex-shrink-0">
             <label htmlFor="sort" className="block text-sm font-medium text-gray-700 mb-1">
@@ -192,27 +193,29 @@ export default function ReviewsPage() {
             </select>
           </div>
         </div>
-        
+
         {/* Category filters */}
         <div className="mb-4">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Category</h3>
           <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryChange(category.id)}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  selectedCategory === category.id
+            {categories.slice(0, !showAll ? 10 : categories.length).map((category, i) => {
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleCategoryChange(category.slug)}
+                  className={`px-3 py-1 rounded-full text-sm ${selectedCategory === category.slug
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
+                    }`}
+                >
+                  {category.name}
+                </button>
+              )
+            })}
+            <div onClick={() => setShowALl(!showAll)} className="flex items-center underline cursor-pointer text-blue-600">Show {showAll?'less...':'more...'}</div>
           </div>
         </div>
-        
+
         {/* Tag filters */}
         <div>
           <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Tags</h3>
@@ -221,11 +224,10 @@ export default function ReviewsPage() {
               <button
                 key={tag.id}
                 onClick={() => handleTagToggle(tag.id)}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  selectedTags.includes(tag.id)
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                }`}
+                className={`px-3 py-1 rounded-full text-sm ${selectedTags.includes(tag.id)
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                  }`}
               >
                 {tag.name}
               </button>
@@ -233,20 +235,20 @@ export default function ReviewsPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Results count */}
       <p className="text-gray-600 mb-6">
         Showing {filteredAndSortedPosts.length} {filteredAndSortedPosts.length === 1 ? 'review' : 'reviews'}
         {selectedCategory && ` in ${getCategoryName(selectedCategory)}`}
       </p>
-      
+
       {/* Featured post */}
       {filteredAndSortedPosts.length > 0 && (
         <div className="mb-12">
           <BlogCard post={filteredAndSortedPosts[0]} variant="featured" />
         </div>
       )}
-      
+
       {/* Post grid */}
       {filteredAndSortedPosts.length > 1 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

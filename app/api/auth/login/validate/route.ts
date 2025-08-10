@@ -15,8 +15,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Extract user ID from the mock token
-    const userId = authHeader.replace('Bearer jwt-token-', '');
+    const userId = authHeader.replace('Bearer jwt-token-', '').trim();
+    console.log('Validating user with ID:', userId);
     const user = await Users.findById(userId);
+    console.log('User:', user);
+
 
     if (!user?._id) {
       return NextResponse.json(

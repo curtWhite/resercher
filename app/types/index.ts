@@ -5,6 +5,7 @@ export type DateTime = string;
 // User related types
 export interface User {
   id: ID;
+  _id?:ID;
   name: string;
   email: string;
   avatarUrl?: string;
@@ -24,6 +25,7 @@ export interface UserUpdateData {
 // Blog post related types
 export interface BlogPost {
   status: string;
+  _id?: ID; // Optional for MongoDB ObjectId
   id: ID;
   title: string;
   content: string;
@@ -66,6 +68,7 @@ export interface BlogPostUpdateData {
 
 // Research paper related types
 export interface ResearchPaper {
+  _id?: ID; // Optional for MongoDB ObjectId
   pages: string;
   issue: any;
   volume: any;
@@ -85,6 +88,7 @@ export interface ResearchPaper {
 }
 
 export interface PaperMetadata {
+  _id?: ID; // Optional for MongoDB ObjectId
   title: string;
   authors: string[];
   abstract: string;
@@ -100,6 +104,7 @@ export interface Category {
   name: string;
   description: string;
   slug: string;
+  parent?:string | null; // For nested categories
 }
 
 export interface CategoryCreateData {
@@ -109,6 +114,7 @@ export interface CategoryCreateData {
 }
 
 export interface CategoryUpdateData {
+  id?: string;
   name?: string;
   description?: string;
   slug?: string;
@@ -133,6 +139,7 @@ export interface TagUpdateData {
 
 // Comment related types
 export interface Comment {
+  _id?: ID; // Optional for MongoDB ObjectId
   id: ID;
   content: string;
   userId: ID;
@@ -140,9 +147,11 @@ export interface Comment {
   parentId?: ID;
   createdAt: DateTime;
   updatedAt: DateTime;
+  user?: User; // Optional, populated when fetching comments
 }
 
 export interface CommentCreateData {
+  id?: string;
   content: string;
   userId: ID;
   postId: ID;
@@ -150,6 +159,7 @@ export interface CommentCreateData {
 }
 
 export interface CommentUpdateData {
+  id?: string;
   content: string;
 }
 

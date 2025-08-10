@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface UserData {
     id: string;
+    _id:string | undefined | any; // Optional, can be used for MongoDB ObjectId
     name: string;
     email: string;
     avatarUrl?: string;
@@ -51,7 +52,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 })
                     .then(res => res.json())
                     .then(data => {
-                        console.log('User validation response:', data);
                         if (data.user) {
                             setUser(userData);
                             setIsAuthenticated(true);
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                             setIsAuthenticated(false);
                         }
                     })
-                    .catch(() => {
+                    .catch((e) => {
                         setUser(null);
                         localStorage.removeItem('user');
                         setIsAuthenticated(false);
@@ -84,7 +84,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
 
         const data = await response.json();
-        console.error('Login response:', data);
         if (!response.ok) {
             throw new Error(data.message || 'Failed to log in');
         }

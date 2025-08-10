@@ -232,7 +232,7 @@ export default function PapersPage() {
                   href={`/papers/${paper.id}`}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  View Details
+                  Digest Paper
                 </Link>
 
                 {paper.pdfUrl && (
@@ -242,7 +242,7 @@ export default function PapersPage() {
                     rel="noopener noreferrer"
                     className="px-4 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50"
                   >
-                    View PDF
+                    View Paper
                   </a>
                 )}
 
@@ -251,7 +251,7 @@ export default function PapersPage() {
                   href={`/reviews?paper=${paper.id}`}
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
                 >
-                  Find Related Reviews
+                  Find Related Digests
                 </Link>
               </div>
             </div>
