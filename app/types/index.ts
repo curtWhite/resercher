@@ -53,6 +53,7 @@ export interface BlogPostCreateData {
   paperId?: ID;
   published?: boolean;
   publishedAt?: DateTime; // Optional, if not provided will default to now
+  featured?: boolean; // Optional, if not provided will default to false
 }
 
 export interface BlogPostUpdateData {
