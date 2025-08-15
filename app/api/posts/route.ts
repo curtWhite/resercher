@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BlogPosts } from '@/app/lib/db';
+import { BlogPosts, Categories } from '@/app/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { BlogPost, BlogPostCreateData, PostQueryParams } from '@/app/types';
 
@@ -13,30 +13,45 @@ export async function GET(request: NextRequest) {
     const tagId = searchParams.get('tagId') || undefined;
     const userId = searchParams.get('userId') || undefined;
     const query = searchParams.get('query') || undefined;
+    const featured = searchParams.get('featured') === 'true';
 
     const blogPosts = await BlogPosts.getAll();
     // Apply filters
     let filteredPosts = [...blogPosts].filter(post => post.published);
 
     if (categoryId) {
-      filteredPosts = filteredPosts.filter(post => post.categoryIds.includes(categoryId));
+      let categoryIds = categoryId.includes(',') ? categoryId.split(",") : [categoryId];
+      categoryIds = await Promise.all(categoryIds.map(async (catId) => await Categories.findBySlug(catId).then(cat => cat?.name || '')));
+      console.log('Category IDs:', categoryIds);
+      filteredPosts = await BlogPosts.filterByKeys([
+        { categoryIds: { $in: categoryIds } },
+      ]);
     }
 
     if (tagId) {
-      filteredPosts = filteredPosts.filter(post => post.tagIds.includes(tagId));
+      filteredPosts = await BlogPosts.filterByKeys([
+        { tagIds: { $in: [tagId] } },
+        { tagId: tagId }
+      ]);
     }
 
     if (userId) {
-      filteredPosts = filteredPosts.filter(post => post.userId === userId);
+      filteredPosts = await BlogPosts.filterByKeys([
+        { userId: userId }
+      ]);
     }
 
     if (query) {
-      const lowerQuery = query.toLowerCase();
-      filteredPosts = filteredPosts.filter(
-        post => 
-          post.title.toLowerCase().includes(lowerQuery) || 
-          post.content.toLowerCase().includes(lowerQuery)
-      );
+      filteredPosts = await BlogPosts.filterByKeys([
+        { title: { $regex: new RegExp(query, 'i') } },
+        { content: { $regex: new RegExp(query, 'i') } },
+        { excerpt: { $regex: new RegExp(query, 'i') } }
+      ]);
+      // filteredPosts = filteredPosts.filter(post => lowerQuery.some(p => p._id === post._id));
+    }
+
+    if (featured) {
+      filteredPosts = await BlogPosts.getFeaturedPosts();
     }
 
     // Sort by publishedAt in descending order
@@ -52,6 +67,7 @@ export async function GET(request: NextRequest) {
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
     const paginatedPosts = filteredPosts.slice(startIndex, endIndex);
+
 
     return NextResponse.json({
       items: paginatedPosts,

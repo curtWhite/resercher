@@ -252,11 +252,24 @@ export class BlogPosts {
     return postsCollection.find({}).toArray();
   }
 
+  static async getFeaturedPosts() {
+    const db = await getDatabase();
+    const postsCollection = db.collection<BlogPost>('blogs');
+    return postsCollection.find({ featured: true, published: true }).sort({ publishedAt: -1, updatedAt: -1, createdAt: -1}).toArray();
+  }
+
   static async create(post: BlogPost) {
     const db = await getDatabase();
     const postsCollection = db.collection<BlogPost>('blogs');
     await postsCollection.insertOne(post);
   }
+
+  static async filterByKeys(keys: any) {
+    const db = await getDatabase();
+    const postsCollection = db.collection<BlogPost>('blogs');
+    return postsCollection.find({ $or: keys }).toArray();
+  }
+  
 
   static async findById(id: string) {
     const db = await getDatabase();

@@ -42,7 +42,7 @@ export default function HomePage() {
 
       // Get featured and recent posts
       const posts = postsData.items || [];
-      const featuredPost = posts.filter((post: BlogPost) => post.featured).slice(0, 3);
+      const featuredPost = await fetch('/api/posts?featured=true&limit=3').then(res => res.json()).then(data => data.items || []);
       const nonFeaturedPosts = posts.filter((post: BlogPost) => !post.featured);
 
 
@@ -225,7 +225,7 @@ export default function HomePage() {
                     {categories.slice(0, !showAll ? 10 : categories.length).map((category) => (
                       <Link
                         key={category.id}
-                        href={`/categories/${category.id}`}
+                        href={`/categories/${category._id}`}
                         className="px-4 py-2 bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition"
                       >
                         {category.name}

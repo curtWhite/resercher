@@ -100,6 +100,7 @@ export interface PaperMetadata {
 
 // Category related types
 export interface Category {
+  _id: any;
   id: ID;
   name: string;
   description: string;

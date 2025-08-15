@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import BlogCard from '@/app/components/blog/blog-card';
 import { BlogPost, Category, Tag } from '@/app/types';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ReviewsPage() {
+
+  const route = useRouter();
+
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -13,18 +16,56 @@ export default function ReviewsPage() {
   const [error, setError] = useState('');
 
   // Filters
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [showAll, setShowALl] = useState<boolean>(false);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setIsLoading(true);
+  const params = useSearchParams();
+  const category = params.get('category') || null;
+  const tag = params.get('tag') || null;
+  const query = params.get('query') || null;
 
-        // Fetch posts, categories, and tags in parallel
+  const activeCategory = category ? category.split(',') : [];
+
+  async function fetchData() {
+
+    try {
+      setIsLoading(true);
+
+      // Fetch posts, categories, and tags in parallel
+      console.log('Fetching posts, categories, and tags...', selectedCategory, tag, query);
+      if (selectedCategory || tag || query) {
+        let url = '/api/posts?';
+        if (selectedCategory.length > 0) url += `categoryId=${selectedCategory.join(',')}&`;
+        if (tag) url += `tag=${tag}&`;
+        if (query) url += `query=${query}&`;
+
+        if (url.endsWith('&')) {
+          url = url.slice(0, -1); // Remove trailing '&'
+        }
+        console.log('Fetching from:', url);
+        const postsRes = await fetch(url);
+
+        const [categoriesRes, tagsRes] = await Promise.all([
+          fetch('/api/categories'),
+          fetch('/api/tags')
+        ]);
+
+        if (!postsRes.ok) throw new Error('Failed to fetch posts');
+        if (!categoriesRes.ok) throw new Error('Failed to fetch categories');
+        if (!tagsRes.ok) throw new Error('Failed to fetch tags');
+
+        const categoriesData = await categoriesRes.json();
+        const tagsData = await tagsRes.json();
+        const postsData = await postsRes.json();
+
+        setCategories(categoriesData || []);
+        setTags(tagsData || []);
+        setPosts(postsData.items || []);
+      } else {
+
         const [postsRes, categoriesRes, tagsRes] = await Promise.all([
           fetch('/api/posts'),
           fetch('/api/categories'),
@@ -42,21 +83,62 @@ export default function ReviewsPage() {
         setPosts(postsData.items || []);
         setCategories(categoriesData || []);
         setTags(tagsData || []);
-
-      } catch (err: any) {
-        setError(err.message || 'Failed to load data');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
       }
-    }
 
+    } catch (err: any) {
+      setError(err.message || 'Failed to load data');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+
+  useEffect(() => {
+    if (activeCategory.length > 0) {
+      setSelectedCategory(activeCategory);
+    }
     fetchData();
   }, []);
 
+  useEffect(() => {
+
+      console.log('Selected Category ->:', selectedCategory);
+      fetchData();
+      //, selectedTags, searchQuery, sortBy
+  }, [selectedCategory]);
+
+
   // Handle category filter change
   const handleCategoryChange = (catId: string) => {
-    setSelectedCategory(catId === selectedCategory ? '' : catId);
+    if (catId === '') {
+      setSelectedCategory([]);
+      route.push('/reviews');
+      return;
+    }
+    if (selectedCategory.length <= 0) {
+      setSelectedCategory([catId]);
+      route.push(`/reviews?category=${catId}`);
+      // window.location.reload();
+      return;
+    }
+
+    let newSelectedCategory = [...selectedCategory];
+    if (selectedCategory.includes(catId)) {
+      newSelectedCategory = selectedCategory.filter(id => id !== catId);
+    } else {
+      newSelectedCategory = [...selectedCategory, catId];
+    }
+
+    if (newSelectedCategory.length === 0) {
+      route.push('/reviews');
+      setSelectedCategory([]);
+      return;
+    }
+
+    setSelectedCategory(newSelectedCategory);
+    route.push(`/reviews?category=${[...newSelectedCategory].join(',')}`);
+    // window.location.reload();
   };
 
   // Handle tag filter toggle
@@ -77,9 +159,9 @@ export default function ReviewsPage() {
   const filteredAndSortedPosts = [...posts]
     .filter(post => {
       // Filter by category if selected
-      if (selectedCategory && !post.categoryIds?.includes(selectedCategory)) {
-        return false;
-      }
+      // if (selectedCategory?.length > 0 && !post.categoryIds?.some(i => selectedCategory.includes(i.toLowerCase().split('-').join(' ')))) {
+      //   return false;
+      // }
 
       // Filter by selected tags
       if (selectedTags.length > 0) {
@@ -114,10 +196,13 @@ export default function ReviewsPage() {
     });
 
   // Get category name by ID
-  const getCategoryName = (catId: string) => {
-    const category = categories.find(cat => cat.id === catId);
-    return category ? category.name : catId;
-  };
+  const getCategoryName = (catIds: string[]) => {
+    return catIds.map(catId => {
+      const category = categories.find(c => c._id === catId);
+      return category ? category.name : catId;
+    }).join(', ');
+  }
+
 
   if (isLoading) {
     return (
@@ -196,14 +281,17 @@ export default function ReviewsPage() {
 
         {/* Category filters */}
         <div className="mb-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Category</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Category</h3>
+            <h3 onClick={() => handleCategoryChange('')} className="text-sm font-medium bg-red-500 cursor-pointer text-white rounded-md px-4 py-1 mb-2">Clear Filters</h3>
+          </div>
           <div className="flex flex-wrap gap-2">
             {categories.slice(0, !showAll ? 10 : categories.length).map((category, i) => {
               return (
                 <button
                   key={i}
                   onClick={() => handleCategoryChange(category.slug)}
-                  className={`px-3 py-1 rounded-full text-sm ${selectedCategory === category.slug
+                  className={`px-3 py-1 rounded-full text-sm ${activeCategory.includes(category.slug)
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
@@ -212,7 +300,7 @@ export default function ReviewsPage() {
                 </button>
               )
             })}
-            <div onClick={() => setShowALl(!showAll)} className="flex items-center underline cursor-pointer text-blue-600">Show {showAll?'less...':'more...'}</div>
+            <div onClick={() => setShowALl(!showAll)} className="flex items-center underline cursor-pointer text-blue-600">Show {showAll ? 'less...' : 'more...'}</div>
           </div>
         </div>
 
@@ -264,7 +352,7 @@ export default function ReviewsPage() {
           </p>
           <button
             onClick={() => {
-              setSelectedCategory('');
+              setSelectedCategory([]);
               setSelectedTags([]);
               setSearchQuery('');
             }}
