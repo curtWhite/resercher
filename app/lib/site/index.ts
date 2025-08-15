@@ -5,6 +5,7 @@ export const getSiteMetadata = () => {
     siteurl: 'https://research-review-blog.com',
     feedurl: 'https://research-review-blog.com/feed.xml',
     copyright: '© 2023 Research Review Blog',
-    language: 'en-US'
+    language: 'en-US',
+    url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
   }
 }

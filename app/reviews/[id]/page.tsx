@@ -7,6 +7,74 @@ import { BlogPost, ResearchPaper, User, Comment, Category, Tag } from '@/app/typ
 import { useAuth } from '@/app/context/auth';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { Metadata, ResolvingMetadata } from 'next';
+import { getSiteMetadata } from '@/app/lib/site';
+
+
+export async function generateMetadata(
+  { params, searchParams }: { params: { id: string }, searchParams: { [key: string]: string | string[] | undefined } },
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+
+  const _metadata = getSiteMetadata();
+  const postId = params.id as string;
+
+  // Fetch the post data to get title and description
+  const postRes = await fetch(`/api/posts/${postId}`);
+  if (!postRes.ok) {
+    const post = await postRes.json();
+    return {
+      title: _metadata.title,
+      description: _metadata.description,
+      metadataBase: new URL(_metadata.url),
+      openGraph: {
+        title: _metadata.title,
+        description: _metadata.description,
+        url: _metadata.siteurl,
+        siteName: _metadata.title,
+        images: [
+          {
+            url: post.coverImageUrl || `${_metadata.siteurl}/og-image.jpg`,
+            width: 1200,
+            height: 630,
+            alt: _metadata.title,
+          },
+        ],
+        locale: _metadata.language,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: _metadata.title,
+        description: _metadata.description,
+        images: [post.coverImageUrl || `${_metadata.siteurl}/og-image.jpg`],
+      }
+    }
+  }
+
+  const postData = await postRes.json();
+  if (!postData) {
+    return {  
+      title: _metadata.title,
+      description: _metadata.description,
+      metadataBase: new URL(_metadata.url),
+      openGraph: {
+        title: _metadata.title,
+        description: _metadata.description,
+        url: _metadata.siteurl,
+        siteName: _metadata.title,
+        locale: _metadata.language,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: _metadata.title,
+        description: _metadata.description,
+      }
+    }
+  }
+
+  return postData
+}
+
 
 
 async function renderMarkdownToHTML(markdownText: string) {
